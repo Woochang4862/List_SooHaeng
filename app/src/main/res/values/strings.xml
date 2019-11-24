@@ -1,10 +1,7 @@
 <resources>
-    <string name="app_name">List_SooHaeng</string>
+    <string name="app_name">List&lt;수행&gt;</string>
     <string name="add_button_text">추가</string>
     <string name="edit_button_text">수정</string>
     <string name="menu_subject">과목별</string>
     <string name="menu_date">날짜별</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

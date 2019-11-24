@@ -78,13 +78,13 @@ public class AlarmService extends Service {
                 PendingIntent pi = PendingIntent.getActivity(this, 111, _intent, PendingIntent.FLAG_UPDATE_CURRENT);
                 long[] pattern = {0, 1000, 0};
                 NotificationCompat.BigTextStyle bigText = new NotificationCompat.BigTextStyle();
-                bigText.bigText("수형평가 준비하세요!");
+                //bigText.bigText("수형평가 준비하세요!");
                 //bigText.setBigContentTitle(data.get().getTitle() + "개봉일까지 " + Util.calDDay(releaseDate) + "일 전입니다");
-                bigText.setSummaryText("List<수행>");
+                bigText.setSummaryText("알림");
                 NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                        .setSmallIcon(R.mipmap.ic_launcher_round)
-                        //.setContentTitle(data.getMovie().getTitle())
-                        //.setContentText("개봉일까지 " + Util.calDDay(releaseDate) + "일 전입니다")
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle("수행평가가 얼마 남지 않았습니다")
+                        .setContentText("수형평가를 준비하세요!")
                         .setPriority(Notification.PRIORITY_HIGH)
                         .setContentIntent(pi)
                         .setAutoCancel(true)
