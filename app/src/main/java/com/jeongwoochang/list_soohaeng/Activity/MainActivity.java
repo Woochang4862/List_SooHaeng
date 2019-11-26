@@ -3,13 +3,13 @@ package com.jeongwoochang.list_soohaeng.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.jeongwoochang.list_soohaeng.Fragment.DateFragment;
+import com.jeongwoochang.list_soohaeng.Fragment.AuthFragment;
 import com.jeongwoochang.list_soohaeng.Fragment.SubjectFragment;
 import com.jeongwoochang.list_soohaeng.R;
 
@@ -34,8 +34,8 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigationView.setOnNavigationItemSelectedListener(menuItem -> {
             selectedFragment = null;
-            switch (menuItem.getItemId()){
-                case R.id.action_date:{
+            switch (menuItem.getItemId()) {
+                case R.id.action_date: {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         Window window = getWindow();
                         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = DateFragment.newInstance();
                     break;
                 }
-                case R.id.action_subject:{
+                case R.id.action_subject: {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                         Window window = getWindow();
                         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -53,8 +53,17 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = SubjectFragment.newInstance();
                     break;
                 }
+                case R.id.action_auth: {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        Window window = getWindow();
+                        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                        window.setStatusBarColor(ContextCompat.getColor(MainActivity.this, R.color.colorPrimaryDark));
+                    }
+                    selectedFragment = AuthFragment.newInstance();
+                    break;
+                }
             }
-            if(selectedFragment != null) {
+            if (selectedFragment != null) {
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                 transaction.replace(R.id.container, selectedFragment);
                 transaction.commit();
@@ -65,19 +74,16 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setSelectedItemId(R.id.action_date);
 
         listButton = findViewById(R.id.list_button);
-        listButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, TestGroupListActivity.class);
-                startActivityForResult(intent, 201);
-            }
+        listButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, TestGroupListActivity.class);
+            startActivityForResult(intent, 201);
         });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == RESULT_OK){
+        if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case 201:
                     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();

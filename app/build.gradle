@@ -28,13 +28,15 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.google.android.material:material:1.0.0'
 
     implementation 'com.jakewharton.timber:timber:4.7.1' // Logging Tool
     implementation 'joda-time:joda-time:2.10.5' // Date and Time Library
+    implementation 'com.google.firebase:firebase-auth:19.2.0'
+    implementation 'com.google.android.gms:play-services-auth:17.0.0'
 
     //UI Dependency
     implementation 'com.github.hugocastelani:waterfall-toolbar:0.5.0'
@@ -43,3 +45,5 @@ dependencies {
     implementation 'com.github.tibolte:agendacalendarview:1.0.4'
     implementation 'com.github.iammert:ExpandableLayout:1.4.1'
 }
+
+apply plugin: "com.google.gms.google-services"
