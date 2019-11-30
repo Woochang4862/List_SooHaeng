@@ -8,6 +8,8 @@ import android.view.WindowManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 import com.jeongwoochang.list_soohaeng.Fragment.DateFragment;
 import com.jeongwoochang.list_soohaeng.Fragment.AuthFragment;
 import com.jeongwoochang.list_soohaeng.Fragment.SubjectFragment;
@@ -75,8 +77,12 @@ public class MainActivity extends AppCompatActivity {
 
         listButton = findViewById(R.id.list_button);
         listButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, TestGroupListActivity.class);
-            startActivityForResult(intent, 201);
+            if(FirebaseAuth.getInstance().getCurrentUser() != null) {
+                Intent intent = new Intent(MainActivity.this, TestGroupListActivity.class);
+                startActivityForResult(intent, 201);
+            } else {
+                Snackbar.make(findViewById(R.id.container), "로그인 해주세요.", Snackbar.LENGTH_SHORT).show();
+            }
         });
     }
 

@@ -61,9 +61,8 @@ public class AlarmUtil {
     private AlarmUtil() {
     }
 
-    public void addAlarm(Integer _id, DateTime alarmDate){
-        Alarm alarmData;
-        dbAdapter.addAlarm(alarmData = new Alarm(_id, alarmDate));
+    public void addAlarm(Alarm alarmData){
+        dbAdapter.addAlarm(alarmData);
 
         Intent intent = new Intent(context, AlarmReceiver.class);
         Bundle args = new Bundle();
@@ -78,7 +77,7 @@ public class AlarmUtil {
 
         pendingIntent = PendingIntent.getBroadcast(context, alarmData.get_id(), intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        am.set(AlarmManager.RTC_WAKEUP, alarmDate.getMillis(), pendingIntent);
+        am.set(AlarmManager.RTC_WAKEUP, alarmData.getAlarmDate().getMillis(), pendingIntent);
     }
 
     public void removeAlarm(Integer _id){

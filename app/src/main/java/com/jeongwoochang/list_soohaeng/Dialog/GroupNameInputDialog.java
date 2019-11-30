@@ -33,7 +33,7 @@ public class GroupNameInputDialog extends Dialog {
 
         setContentView(R.layout.dialog_group_name_input);
 
-        groupName = findViewById(R.id.group_name);
+        groupName = findViewById(R.id.member_name);
         addBtn = findViewById(R.id.add_button);
         addBtn.setOnClickListener(v -> {
             if (!groupName.getText().toString().isEmpty())

@@ -31,7 +31,7 @@ public class TestRecyclerAdapter extends RecyclerView.Adapter<TestHolder> {
         holder.testName.setText(items.get(position).getName());
         holder.testSubject.setText(items.get(position).getSubject());
         holder.testDate.setText(items.get(position).getDateString());
-        holder.testExpectedDate.setText(items.get(position).getExpectedTimeOfString()+"일");
+        holder.testExpectedDate.setText(items.get(position).getExpectedTime()+"일");
     }
 
     @Override

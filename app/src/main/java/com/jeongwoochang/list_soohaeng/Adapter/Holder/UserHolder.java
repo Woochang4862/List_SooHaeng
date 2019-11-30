@@ -9,29 +9,30 @@ import com.jeongwoochang.list_soohaeng.R;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class TestGroupHolder extends RecyclerView.ViewHolder {
+public class UserHolder extends RecyclerView.ViewHolder {
 
-    public TextView name, pub_date;
+    public TextView email;
 
-    public TestGroupHolder(@NonNull View itemView, final OnItemClickListener onItemClickListener) {
+    public UserHolder(@NonNull View itemView, OnItemClickListener onItemClickListener) {
         super(itemView);
 
         itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(onItemClickListener != null)
-                    onItemClickListener.onItemClick(v, getLayoutPosition());
+                    onItemClickListener.onItemClick(v, getAdapterPosition());
             }
         });
+
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 if(onItemClickListener != null)
-                    onItemClickListener.onItemLongClick(v, getLayoutPosition());
+                    onItemClickListener.onItemLongClick(v, getAdapterPosition());
                 return true;
             }
         });
-        name = itemView.findViewById(R.id.member_name);
-        pub_date = itemView.findViewById(R.id.pub_date);
+
+        email = itemView.findViewById(R.id.email);
     }
 }

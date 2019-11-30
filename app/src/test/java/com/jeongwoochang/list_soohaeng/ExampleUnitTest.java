@@ -2,6 +2,8 @@ package com.jeongwoochang.list_soohaeng;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 /**
@@ -12,6 +14,14 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
+        try {
+            String text = "ABCDEFGHIJKLMNOP"; // translating text String to 7 bit ASCII encoding
+            byte[] bytes = text.getBytes("US-ASCII");
+            System.out.println("ASCII value of " + text + " is following");
+            System.out.println(Arrays.toString(bytes));
+            assertEquals(Arrays.toString(bytes), "");
+        } catch (java.io.UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 }

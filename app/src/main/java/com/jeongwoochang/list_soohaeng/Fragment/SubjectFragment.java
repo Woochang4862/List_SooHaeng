@@ -1,19 +1,25 @@
 package com.jeongwoochang.list_soohaeng.Fragment;
 
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 import com.jeongwoochang.list_soohaeng.Activity.EditTestActivity;
-import com.jeongwoochang.list_soohaeng.Util.AlarmUtil;
-import com.jeongwoochang.list_soohaeng.Model.DBAdapter;
+import com.jeongwoochang.list_soohaeng.Model.FirestoreRemoteSource;
+import com.jeongwoochang.list_soohaeng.Model.Listener.OnCompleteListener;
+import com.jeongwoochang.list_soohaeng.Model.Schema.Alarm;
 import com.jeongwoochang.list_soohaeng.Model.Schema.Test;
 import com.jeongwoochang.list_soohaeng.R;
+import com.jeongwoochang.list_soohaeng.Util.AlarmUtil;
 
 import java.util.ArrayList;
 
@@ -33,9 +39,26 @@ import static android.app.Activity.RESULT_OK;
 public class SubjectFragment extends Fragment {
 
     private ExpandableLayout expandableLayout;
-    private DBAdapter dbAdapter;
-    private int currEditingParentPosition;
+    private FirestoreRemoteSource fsrs;
     private AlarmUtil au;
+    public ProgressDialog mProgressDialog;
+
+    public void showProgressDialog() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(getContext());
+            mProgressDialog.setMessage(getString(R.string.loading));
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
+        }
+
+        mProgressDialog.show();
+    }
+
+    public void hideProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
+    }
 
     public SubjectFragment() {
         // Required empty public constructor
@@ -52,7 +75,7 @@ public class SubjectFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_subject, container, false);
-        dbAdapter = DBAdapter.getInstance();
+        fsrs = FirestoreRemoteSource.getInstance();
         au = AlarmUtil.getInstance();
         expandableLayout = v.findViewById(R.id.el);
         expandableLayout.setRenderer(new ExpandableLayout.Renderer<String, Test>() {
@@ -71,8 +94,6 @@ public class SubjectFragment extends Fragment {
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        currEditingParentPosition = parentPosition;
-
                         Intent intent = new Intent(getContext(), EditTestActivity.class);
                         intent.putExtra("test", model);
                         startActivityForResult(intent, 200);
@@ -81,49 +102,68 @@ public class SubjectFragment extends Fragment {
                 ((TextView) view.findViewById(R.id.test_name)).setText(model.getName());
                 ((TextView) view.findViewById(R.id.test_subject)).setText(model.getSubject());
                 ((TextView) view.findViewById(R.id.test_date)).setText(model.getDateString());
-                ((TextView) view.findViewById(R.id.test_expected_date)).setText(model.getExpectedTimeOfString() + "일");
+                ((TextView) view.findViewById(R.id.test_expected_date)).setText(model.getExpectedTime() + "일");
             }
         });
         expandableLayout.setCollapseListener((ExpandCollapseListener.CollapseListener<String>) (parentIndex, parent, view) -> {
-            //AnimationUtil.rotate(view.findViewById(R.id.expand_image), 180, 0, 4000);
-            //AnimationUtil.collapse(view);
             view.findViewById(R.id.expand_image).setRotation(0);
         });
         expandableLayout.setExpandListener((ExpandCollapseListener.ExpandListener<String>) (parentIndex, parent, view) -> {
-            //AnimationUtil.rotate(view.findViewById(R.id.expand_image), 0, 180, 4000);
-            //AnimationUtil.expand(view);
             view.findViewById(R.id.expand_image).setRotation(180);
         });
-        loadItems();
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            loadItems();
+        } else {
+            Snackbar.make(v, "로그인 해주세요.", Snackbar.LENGTH_SHORT).show();
+        }
         return v;
     }
 
     private void loadItems() {
-        Section<String, Test> section;
-        ArrayList<String> subjects = getSubjectOfTest();
-        ArrayList<Test> tests;
-
-        for (String subject : subjects) {
-            section = new Section<>();
-            tests = getTest(subject);
-            section.parent = subject;
-            section.children.addAll(tests);
-            expandableLayout.addSection(section);
-        }
+        getSubjectOfTest();
     }
 
-    private ArrayList<Test> getTest(String subject) {
-        DBAdapter.connect(getContext());
-        ArrayList<Test> result = dbAdapter.getTest(subject);
-        dbAdapter.close();
-        return result;
+    private void getSubjectOfTest() {
+        showProgressDialog();
+        fsrs.getSubejctOfTest(new OnCompleteListener<ArrayList<String>>() {
+            @Override
+            public void onComplete(ArrayList<String> result) {
+                Log.d("SubjectFragment", result.toString());
+                if (result.isEmpty()) {
+                    hideProgressDialog();
+                    return;
+                }
+                for (String subject : result) {
+                    getTest(subject);
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+                hideProgressDialog();
+            }
+        });
     }
 
-    private ArrayList<String> getSubjectOfTest() {
-        DBAdapter.connect(getContext());
-        ArrayList<String> result = dbAdapter.getSubejctOfTest();
-        dbAdapter.close();
-        return result;
+    private void getTest(String subject) {
+        fsrs.getTestBySubject(subject, new OnCompleteListener<ArrayList<Test>>() {
+            @Override
+            public void onComplete(ArrayList<Test> result) {
+                Section<String, Test> section = new Section<>();
+                section.parent = subject;
+                section.children.addAll(result);
+                expandableLayout.addSection(section);
+                hideProgressDialog();
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+                hideProgressDialog();
+            }
+        });
     }
 
     @Override
@@ -133,15 +173,16 @@ public class SubjectFragment extends Fragment {
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case 200:
+                    if (data == null) {
+                        refreshFragment();
+                        break;
+                    }
                     Test test = (Test) data.getSerializableExtra("test");
                     if (data.getBooleanExtra("isUpdate", true)) {
-                        test.set_id((int) updateTest(test));
-                        updateAlarm(test);
+                        updateTest(test);
                     } else {
-                        test.set_id((int) addTest(test));
-                        addAlarm(test);
+                        addTest(test);
                     }
-                    refreshFragment();
                     break;
             }
         }
@@ -155,30 +196,46 @@ public class SubjectFragment extends Fragment {
         ft.detach(this).attach(this).commit();
     }
 
-    private long updateTest(Test test) {
-        DBAdapter.connect(getContext());
-        long id = dbAdapter.updateTest(test);
-        dbAdapter.close();
-        return id;
+    private void updateTest(Test test) {
+        fsrs.updateTest(test, new OnCompleteListener<Test>() {
+            @Override
+            public void onComplete(Test result) {
+                updateAlarm(test);
+                refreshFragment();
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void updateAlarm(Test test) {
         AlarmUtil.connect(getContext());
-        au.removeAlarm(test.get_id());
-        au.addAlarm(test.get_id(), test.getDate().minus(test.getExpectedTime()));
+        au.removeAlarm(test.hashCode());
+        au.addAlarm(new Alarm(test.hashCode(), test.getDate().minusDays((int) test.getExpectedTime())));
         au.close();
     }
 
-    private long addTest(Test test) {
-        DBAdapter.connect(getContext());
-        long id = dbAdapter.addTest(test);
-        dbAdapter.close();
-        return id;
+    private void addTest(Test test) {
+        fsrs.addTest(test, new OnCompleteListener<Test>() {
+            @Override
+            public void onComplete(Test result) {
+                addAlarm(result);
+                refreshFragment();
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void addAlarm(Test test) {
         AlarmUtil.connect(getContext());
-        au.addAlarm(test.get_id(), test.getDate().minus(test.getExpectedTime()));
+        au.addAlarm(new Alarm(test.hashCode(), test.getDate().minusDays((int) test.getExpectedTime())));
         au.close();
     }
 }

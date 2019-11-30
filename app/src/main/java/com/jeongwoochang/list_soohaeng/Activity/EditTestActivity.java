@@ -20,8 +20,10 @@ import android.widget.Toast;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 import com.github.angads25.filepicker.view.FilePickerDialog;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.jeongwoochang.list_soohaeng.Model.DBAdapter;
+import com.jeongwoochang.list_soohaeng.Model.FirestoreRemoteSource;
+import com.jeongwoochang.list_soohaeng.Model.Listener.OnCompleteListener;
 import com.jeongwoochang.list_soohaeng.Model.Schema.Content;
 import com.jeongwoochang.list_soohaeng.Model.Schema.Test;
 import com.jeongwoochang.list_soohaeng.Model.Schema.TestGroup;
@@ -46,6 +48,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
+import timber.log.Timber;
 
 public class EditTestActivity extends AppCompatActivity {
 
@@ -54,47 +57,50 @@ public class EditTestActivity extends AppCompatActivity {
     private FilePickerDialog filePickerDialog;
     private DatePickerDialog datePickerDialog;
     private TextView fileName, testDate;
-    private DBAdapter dbAdapter;
+    private FirestoreRemoteSource fsrs;
     private Spinner group;
     private TextInputEditText title, subject, expectedDate;
+    private FloatingActionButton logBtn;
 
-    private ArrayList<TestGroup> testGroups;
     private TestGroup currTestGroup;
     private DateTime currTestDate;
     private Content currContent;
     private boolean isUpdate;
     private Test data;
+    private ArrayList<TestGroup> testGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_test);
+        setContentView(R.layout.activity_edit_test);
 
-        dbAdapter = DBAdapter.getInstance();
+        fsrs = FirestoreRemoteSource.getInstance();
 
         dialogInit();
 
         currContent = new Content();
 
-        group = findViewById(R.id.group_name);
-        group.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, loadItems()));
-        group.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                currTestGroup = testGroups.get(position);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
+        group = findViewById(R.id.member_name);
+        loadItems();
 
         title = findViewById(R.id.title);
         subject = findViewById(R.id.subject);
         testDate = findViewById(R.id.test_date);
+        currTestDate = DateTime.now();
+        testDate.setText(DateTimeFormat.forPattern(FirestoreRemoteSource.TEST_DATE_FORMAT).print(currTestDate));
         testDate.setOnClickListener(v -> datePickerDialog.show());
         expectedDate = findViewById(R.id.expected_date);
+
+        logBtn = findViewById(R.id.log_button);
+        logBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(EditTestActivity.this, LogActivity.class);
+                intent.putExtra("test", data);
+                startActivity(intent);
+
+            }
+        });
 
         fileName = findViewById(R.id.file_name);
         fileName.setOnClickListener(v -> {
@@ -140,41 +146,96 @@ public class EditTestActivity extends AppCompatActivity {
             else
                 addTest();
         });
+    }
 
+    private void setTestGroup() {
+        fsrs.getTestGroup(data.getGroup(), new OnCompleteListener<TestGroup>() {
+            @Override
+            public void onComplete(TestGroup result) {
+                currTestGroup = result;
+                group.setSelection(testGroup.indexOf(currTestGroup));
+                group.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        currTestGroup = testGroup.get(position);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+
+    private void loadItems() {
+        fsrs.getTestGroup(new OnCompleteListener<ArrayList<TestGroup>>() {
+            @Override
+            public void onComplete(ArrayList<TestGroup> results) {
+                testGroup = results;
+                ArrayList<String> testGroupName = new ArrayList<>();
+                for (TestGroup testGroup : testGroup) {
+                    testGroupName.add(testGroup.getName());
+                }
+                group.setAdapter(new ArrayAdapter<>(EditTestActivity.this, android.R.layout.simple_spinner_dropdown_item, testGroupName));
+                group.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        currTestGroup = testGroup.get(position);
+                        Timber.d(currTestGroup.toString());
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+
+                    }
+                });
+                Intent intent = getIntent();
+                data = (Test) intent.getSerializableExtra("test");
+                setLogBtnVisibility();
+                if (data != null) {
+                    setTestGroup();
+                    title.setText(data.getName());
+                    subject.setText(data.getSubject());
+                    testDate.setText(data.getDateString());
+                    currTestDate = data.getDate();
+                    expectedDate.setText(data.getExpectedTime() + "");
+                    currContent = data.getContent();
+                    fileName.setText(currContent.getFullFileName());
+
+                    isUpdate = true;
+                    addBtn.setText(getResources().getText(R.string.edit_button_text));
+                }
+            }
+
+            @Override
+            public void onException(Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void setLogBtnVisibility() {
+        if(data == null){
+            logBtn.hide();
+        } else {
+            logBtn.show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         Intent intent = getIntent();
         data = (Test) intent.getSerializableExtra("test");
-        if (data != null) {
-            currTestGroup = getTestGroup(data.getGroup());
-            group.setSelection(testGroups.indexOf(currTestGroup));
-            title.setText(data.getName());
-            subject.setText(data.getSubject());
-            testDate.setText(data.getDateString());
-            currTestDate = data.getDate();
-            expectedDate.setText(data.getExpectedTimeOfString());
-            currContent = data.getContent();
-            fileName.setText(currContent.getFullFileName());
-
-            isUpdate = true;
-            addBtn.setText(getResources().getText(R.string.edit_button_text));
-        }
-    }
-
-    private TestGroup getTestGroup(int _id) {
-        DBAdapter.connect(this);
-        TestGroup testGroup = dbAdapter.getTestGroup(_id);
-        dbAdapter.close();
-        return testGroup;
-    }
-
-
-    private ArrayList<String> loadItems() {
-        DBAdapter.connect(this);
-        ArrayList<String> result = new ArrayList<>();
-        for (TestGroup testGroup : testGroups = dbAdapter.getTestGroup()) {
-            result.add(testGroup.getName());
-        }
-        dbAdapter.close();
-        return result;
+        setLogBtnVisibility();
     }
 
     private void dialogInit() {
@@ -226,7 +287,7 @@ public class EditTestActivity extends AppCompatActivity {
                 subject.getText().toString(),
                 currTestDate,
                 currContent,
-                Integer.parseInt(expectedDate.getText().toString()) * 86400000));
+                Integer.parseInt(expectedDate.getText().toString())));
         intent.putExtra("isUpdate", isUpdate);
         setResult(RESULT_OK, intent);
         finish();
@@ -237,11 +298,11 @@ public class EditTestActivity extends AppCompatActivity {
         intent.putExtra("test", new Test(
                 data.get_id(),
                 currTestGroup.get_id(),
-                title.getText().toString(),
-                subject.getText().toString(),
+                title.getText().toString().trim(),
+                subject.getText().toString().trim(),
                 currTestDate,
                 currContent,
-                Integer.parseInt(expectedDate.getText().toString()) * 86400000,
+                Integer.parseInt(expectedDate.getText().toString()),
                 data.getPub_date()
         ));
         intent.putExtra("isUpdate", isUpdate);
@@ -307,5 +368,12 @@ public class EditTestActivity extends AppCompatActivity {
             //permission is automatically granted on sdk<23 upon installation
             return true;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        setResult(RESULT_OK);
+        finish();
+        super.onBackPressed();
     }
 }

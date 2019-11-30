@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -22,6 +23,9 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.jeongwoochang.list_soohaeng.Model.FirestoreRemoteSource;
+import com.jeongwoochang.list_soohaeng.Model.Listener.OnCompleteListener;
+import com.jeongwoochang.list_soohaeng.Model.Schema.User;
 import com.jeongwoochang.list_soohaeng.R;
 
 import androidx.fragment.app.Fragment;
@@ -43,6 +47,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     private GoogleSignInClient mGoogleSignInClient;
     private TextView mStatusTextView;
     private TextView mDetailTextView;
+
+    private FirestoreRemoteSource fsrs;
 
     public AuthFragment() {
     }
@@ -67,6 +73,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
             mProgressDialog = new ProgressDialog(getContext());
             mProgressDialog.setMessage(getString(R.string.loading));
             mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
         }
 
         mProgressDialog.show();
@@ -95,6 +102,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login, container, false);
+
+        fsrs = FirestoreRemoteSource.getInstance();
 
         // Views
         mStatusTextView = view.findViewById(R.id.status);
@@ -160,6 +169,18 @@ public class AuthFragment extends Fragment implements View.OnClickListener {
                         // Sign in success, update UI with the signed-in user's information
                         Timber.d("signInWithCredential:success");
                         FirebaseUser user = mAuth.getCurrentUser();
+                        fsrs.addUser(new User(user.getUid(), user.getEmail()), new OnCompleteListener<User>() {
+                            @Override
+                            public void onComplete(User result) {
+                                Timber.d(result.toString());
+                                Snackbar.make(getView().findViewById(R.id.main_layout), "Authentication Success.", Snackbar.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onException(Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                         updateUI(user);
                     } else {
                         // If sign in fails, display a message to the user.
