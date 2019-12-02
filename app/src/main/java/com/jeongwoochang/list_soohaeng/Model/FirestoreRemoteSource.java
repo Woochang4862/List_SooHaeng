@@ -642,7 +642,7 @@ public class FirestoreRemoteSource {
      */
     public void removeTest(@NotNull Test test, OnCompleteListener<Test> onCompleteListener) {
         android.util.Log.d("Remove", test.toString());
-        testGroupsRef
+        testsRef
                 .document(test.get_id())
                 .delete()
                 .addOnCompleteListener(new com.google.android.gms.tasks.OnCompleteListener<Void>() {
