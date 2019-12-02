@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "190620021496",
+    "firebase_url": "https://list-soohaeng.firebaseio.com",
+    "project_id": "list-soohaeng",
+    "storage_bucket": "list-soohaeng.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190620021496:android:70576fe2946fa6e1a8010d",
+        "android_client_info": {
+          "package_name": "com.jeongwoochang.list_soohaeng"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "190620021496-pkli2ie17iv4kmu30fdr1l6m3l71i2e6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jeongwoochang.list_soohaeng",
+            "certificate_hash": "6db88e61793cd4b27014eeab44ac59abd33fbed3"
+          }
+        },
+        {
+          "client_id": "190620021496-ure1ks0ajo2c201uer7vde7mq3jl409c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMmhapAmge2qUVyRVw0IjPfaUoWApYX28"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "190620021496-ure1ks0ajo2c201uer7vde7mq3jl409c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
